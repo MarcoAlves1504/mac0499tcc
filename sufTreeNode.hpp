@@ -9,8 +9,6 @@
 
 #include "textArrays.hpp"
 
-#define ALPHABETSIZE 256 /*Tamanho do alfabeto*/
-
 /*Classe de um nó da árvore de sufixos*/
 class sufTreeNode {
 public:

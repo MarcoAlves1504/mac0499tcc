@@ -10,6 +10,7 @@
 
 #define CHAREXTRA '\0' //Caractere especial que precede todos os chars do alfabeto
 #define ARRAYMAXPRINT 20 //Número máximo de valores de um array que devem ser impressos
+#define ALPHABETSIZE 256 //Tamanho do alfabeto
 
 /*Faz uma cópia de text, mas acrescentando o caractere '\0'
 ao final, caso a string original não terminava com '\0'*/

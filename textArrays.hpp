@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "auxFunc.hpp"
+#include "skewAlgorithm.hpp"
 
 class vetSuf;
 class vetLcp;
@@ -125,8 +126,7 @@ void vetSuf::constroiVetLinear(std::string* texto) {
 		std::cerr << "Aviso: construcao linear chamada para vetSuf inicializado. Retornando." << std::endl;
 		return;
 	}
-	std::cerr << "Aviso: construcao linear de vetSuf ainda nao foi implementada." << std::endl;
-	this->constroiVetTrivial(texto);
+	this->arr = skewAlgorithm(texto);
 }
 
 
