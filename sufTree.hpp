@@ -21,6 +21,7 @@ public:
 	bool search(std::string P);
 	int nOccurrences(std::string P);
 	int* occurrences(std::string P);
+	int* computeSuffixArray();
 private:
 	std::string texto; /*Texto passado para a árvore, com o caractere '\0' no final*/
 	vetSuf* vetorSuf; /*Vetor de sufixos do texto*/
@@ -173,4 +174,32 @@ int* sufTree::occurrences(std::string P) {
 	int* occList = new int[maxMatch->numLeaves];
 	maxMatch->listaOccRec(occList, 0);
 	return(occList);
+}
+
+/*Retorna o vetor de sufixos correspondente a essa árvore.
+Se essa árvore foi construída a partir de um vetor de sufixos,
+também verifica se o VS obtido pela computação é igual ao que
+foi usado para sua construção. Se não for, imprime um aviso.*/
+int* sufTree::computeSuffixArray() {
+	int sizeTxt = this->texto.size();
+	int* sufArr = new int[sizeTxt];
+	int index = 0;
+	this->raiz->computeSARec(sufArr, &index);
+	if (this->vetorSuf) { //confere se VS está correto
+		int errorCount = 0;
+		for (int i = 0; i < sizeTxt; i++) {
+			if (this->vetorSuf->at(i) != sufArr[i]) {
+				if (errorCount == 0) {
+					std::cerr << "Aviso: computeSuffixArray() calculou o VS errado: " <<
+						" VS_texto[" << i << "] = " << this->vetorSuf->at(i) << " != " <<
+						sufArr[i] << " = VS_calculado[" << i << "]" << std::endl;
+				}
+				errorCount++;
+			}
+		}
+		if (errorCount > 0) {
+			std::cerr << "Total de posicoes diferentes: " << errorCount << std::endl;
+		}
+	}
+	return(sufArr);
 }

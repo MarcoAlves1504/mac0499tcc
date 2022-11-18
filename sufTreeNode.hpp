@@ -24,12 +24,15 @@ private:
 	int numLeaves; /*Número de folhas abaixo desse nó*/
 	int childrenCount; /*Número de filhos desse nó*/
 	sufTreeNode** children; /*Vetor de filhos*/
+	char firstNonNullChild; /*Primeiro caractere com child != nullptr*/
+	char* nextNonNullChild; /*Caractere do próximo child != nullptr, ou CHAREXTRA caso esse seja o último*/
 	sufTreeNode* pai; /*Pai desse nó*/
 	void constroiFolhasRec(vetSuf* vetorSuf, int* i);
 	void atualizaCamposRec(std::string* txt);
 	void setNextChild(sufTreeNode* ch);
 	sufTreeNode* maxMatchingNodeRec(std::string* T, std::string* P);
 	int listaOccRec(int* lista, int nextIndex);
+	void computeSARec(int* sufArr, int* nextIndex);
 };
 
 /*Constrói um nó com suffixIndex sufInd, que pode ou não ser uma folha.
@@ -42,17 +45,21 @@ sufTreeNode::sufTreeNode(int sufInd, bool folha) {
 	this->start = this->end = -1;
 	this->childrenCount = 0;
 	this->pai = nullptr;
+	this->firstNonNullChild = CHAREXTRA;
 	if (folha) {
 		//Não iremos nem alocar o vetor children
 		this->children = nullptr;
+		this->nextNonNullChild = nullptr;
 		this->numLeaves = 1;
 	}
 	else {
 		//Aloca children e inicializa com nullptr
 		this->children = new sufTreeNode * [ALPHABETSIZE];
+		this->nextNonNullChild = new char[ALPHABETSIZE];
 		this->numLeaves = -1;
 		for (int i = 0; i < ALPHABETSIZE; i++) {
 			this->children[i] = nullptr;
+			this->nextNonNullChild[i] = CHAREXTRA;
 		}
 	}
 }
@@ -73,7 +80,7 @@ void sufTreeNode::setNextChild(sufTreeNode* ch) {
 
 /*Destrói um nó e toda a sua sub-árvore recursivamente*/
 sufTreeNode::~sufTreeNode() {
-	if (this->children) {
+	if (this->children) { //nó interno
 		for (int i = 0; i < ALPHABETSIZE; i++) {
 			if (this->children[i]) {
 				delete (this->children[i]);
@@ -81,6 +88,7 @@ sufTreeNode::~sufTreeNode() {
 		}
 		//O próprio vetor também foi alocado dinamicamente
 		delete[] (this->children);
+		delete[](this->nextNonNullChild);
 	}
 }
 
@@ -141,12 +149,16 @@ void sufTreeNode::atualizaCamposRec(std::string* txt) {
 		this->start = this->end - intervalSize + 1;
 	}
 	//Agora só falta re-ordenar o vetor this->children
+	unsigned char previousLetter = CHAREXTRA;
 	for (int i = this->childrenCount - 1; i >= 0; i--) {
 		sufTreeNode* child = this->children[i];
-		char nextLetter = (*txt)[child->start];
+		char currentLetter = (*txt)[child->start];
 		this->children[i] = nullptr;
-		this->children[(unsigned int)nextLetter] = child;
+		this->children[(unsigned int)currentLetter] = child;
+		this->nextNonNullChild[(unsigned int)currentLetter] = previousLetter;
+		previousLetter = currentLetter;
 	}
+	this->firstNonNullChild = previousLetter;
 }
 
 /*Imprime toda a sub-árvore desse nó em pós-ordem.
@@ -158,11 +170,13 @@ void sufTreeNode::printRec(int depth, char childChar) {
 		std::cout << espaco << "[FOLHA]\n";
 	}
 	else {
-		for (int i = 0; i < ALPHABETSIZE; i++) {
-			if (this->children[i]) {
-				this->children[i]->printRec(depth + 1, (char)i);
+		unsigned char nextChar = this->firstNonNullChild; //começa iterando o menor caractere, que é o primeiro filho
+		do {
+			if (this->children[nextChar]) { //essa condição não deve falhar
+				this->children[nextChar]->printRec(depth + 1, nextChar);
 			}
-		}
+			nextChar = this->nextNonNullChild[nextChar];
+		} while (nextChar != CHAREXTRA);
 		//Imprimiu todos os filhos desse nó
 		std::cout << espaco << "[NO INTERNO]\n";
 	}
@@ -272,12 +286,32 @@ int sufTreeNode::listaOccRec(int* lista, int nextIndex) {
 	}
 	//Nó interno: devemos chamar a recursão para os filhos
 	int j = nextIndex;
-	for (int i = 0; i < ALPHABETSIZE; i++) {
-		if (this->children[i]) {
+	unsigned char nextChar = this->firstNonNullChild; //começa iterando o menor caractere, que é o primeiro filho
+	do {
+		if (this->children[nextChar]) { //essa condição não deve falhar
 			//Adiciona os índices dos filhos e incrementa j
-			j += this->children[i]->listaOccRec(lista, j);
+			j += this->children[nextChar]->listaOccRec(lista, j);
 		}
-	}
+		nextChar = this->nextNonNullChild[nextChar];
+	} while (nextChar != CHAREXTRA);
 	//Número de folhas adicionadas
 	return(j - nextIndex);
+}
+
+/*Visita as folhas da árvore e computa o VS em in-ordem*/
+void sufTreeNode::computeSARec(int* sufArr, int* nextIndex) {
+	if (this->leaf) {
+		//folha, devemos atualizar o VS
+		sufArr[*nextIndex] = this->suffixIndex;
+		(*nextIndex)++;
+		return;
+	}
+	//nó interno, devemos visitar os nós filhos recursivamente
+	unsigned char nextChar = this->firstNonNullChild; //começa iterando o menor caractere, que é o primeiro filho
+	do {
+		if (this->children[nextChar]) { //essa condição não deve falhar
+			this->children[nextChar]->computeSARec(sufArr, nextIndex);
+		}
+		nextChar = this->nextNonNullChild[nextChar];
+	} while (nextChar != CHAREXTRA);
 }
