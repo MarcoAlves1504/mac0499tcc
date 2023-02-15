@@ -6,6 +6,7 @@
 #pragma once
 
 #include <iostream>
+#include <climits>
 
 #include "textArrays.hpp"
 #include "auxFunc.hpp"
@@ -22,7 +23,7 @@ private:
 	vetLcp* lcp;
 	std::string texto;
 	int predSearch(std::string P);
-	int succSearch(std::string P);
+	int lastOccSearch(std::string P);
 };
 
 arraySearch::arraySearch(std::string* txt, bool algsTriviais) {
@@ -139,15 +140,24 @@ int arraySearch::predSearch(std::string P) {
 	return(L);
 }
 
-/*Retorna o índice do sufixo sucessor de P no texto.
-Isso é, cria uma cópia da string P, incrementa a última letra, e retorna 1 + (o predecessor dessa string).*/
-int arraySearch::succSearch(std::string P) {
-	if (P.empty()) {
-		return(this->texto.size());
+/*Retorna o índice do último sufixo que pode ter P como prefixo.
+É usado como limitante superior na busca binária.*/
+int arraySearch::lastOccSearch(std::string P) {
+	char lastChar = CHAR_MAX;
+	int trimIndex;
+	for (trimIndex = P.size() - 1; trimIndex >= 0; trimIndex--) {
+		if (P[trimIndex] != lastChar) {
+			break;
+		}
 	}
-	std::string Q = P;
+	if (trimIndex == -1) {
+		//Todos os caracteres de P são o último do alfabeto (ou P é vazia)
+		return(this->texto.size() - 1);
+	}
+	//trimIndex >= 0 é o índice de um caractere que não é o último do alfabeto
+	std::string Q = P.substr(0, trimIndex + 1); //Q = P[..trimIndex]
 	(Q.back())++;
-	return(1 + this->predSearch(Q));
+	return(this->predSearch(Q));
 }
 
 /*Retorna true se P ocorre no texto ou false caso contrário*/
@@ -158,17 +168,17 @@ bool arraySearch::search(std::string P) {
 /*Retorna o número de ocorrências da palavra P no texto*/
 int arraySearch::nOccurrences(std::string P) {
 	int pred = this->predSearch(P);
-	int succ = this->succSearch(P);
-	return(succ - pred - 1);
+	int last = this->lastOccSearch(P);
+	return(last - pred);
 }
 
 /*Retorna os índices das ocorrências de P no texto.
 O vetor retornado deve ser desalocado posteriormente.*/
 int* arraySearch::occurrences(std::string P) {
 	int pred = this->predSearch(P);
-	int succ = this->succSearch(P);
-	int* occurs = new int[succ - pred - 1];
-	for (int i = pred + 1, j = 0; i < succ; i++, j++) {
+	int lastOccur = this->lastOccSearch(P);
+	int* occurs = new int[lastOccur - pred];
+	for (int i = pred + 1, j = 0; i <= lastOccur; i++, j++) {
 		occurs[j] = this->vetorSufixos->at(i);
 	}
 	return(occurs);

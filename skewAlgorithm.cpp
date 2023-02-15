@@ -12,13 +12,28 @@
 int* skewAlgorithm(std::string* texto) {
 	int sizeText = texto->size();
 	int* textoInt = new int[sizeText];
+	int* ranksEmT = new int[ALPHABETSIZE];
+	for (int i = 0; i < ALPHABETSIZE; i++) {
+		ranksEmT[i] = -1;
+	}
+	for (int i = 0; i < sizeText; i++) {
+		ranksEmT[(int)texto->at(i)] = 0; //inicializa com 0 os caracteres que ocorrem em T
+	}
+	int nextRank = 0;
+	for (int i = 0; i < ALPHABETSIZE; i++) {
+		if (ranksEmT[i] != -1) { //ocorre em T
+			ranksEmT[i] = nextRank;
+			nextRank++;
+		}
+	}
 	for (int i = 0; i < sizeText; i++) {
 		/*converte os chars do texto para int*/
-		textoInt[i] = (int)texto->at(i);
+		textoInt[i] = ranksEmT[(int)texto->at(i)];
 	}
 	int* vetSuf = new int[sizeText];
-	skewRec(textoInt, sizeText, vetSuf, ALPHABETSIZE);
+	skewRec(textoInt, sizeText, vetSuf, nextRank);
 	delete[]textoInt;
+	delete[]ranksEmT;
 	return(vetSuf);
 }
 
@@ -134,7 +149,7 @@ void skewRec(int* T, int tSize, int* vetSufT, int numChaves) {
 		int value = vetSuf12[i12];
 		if (value < t1Size) {
 			//value é sufixo mod 1
-			int nextMod1Char = convertT12IndexT(value);
+			int nextMod1Char = 3 * value + 1;
 			int nextMod1Rem;
 			if (nextMod1Char + 1 < tSize) {
 				//o sufixo depois do caractere de mod 1 ainda não estoura o texto
@@ -158,7 +173,7 @@ void skewRec(int* T, int tSize, int* vetSufT, int numChaves) {
 		}
 		else {
 			//value é sufixo mod 2
-			int firstMod2Char = convertT12IndexT(value);
+			int firstMod2Char = 3 * (value - t1Size) + 2;
 			int nextMod2Rem;
 			if (firstMod2Char + 2 < tSize) {
 				//o sufixo ainda não estoura o texto
@@ -172,7 +187,7 @@ void skewRec(int* T, int tSize, int* vetSufT, int numChaves) {
 			int firstMod0Char = vetSuf0[i0];
 			int nextMod0Rem;
 			if (firstMod0Char + 2 < tSize) {
-				//ainda não esoura o texto
+				//ainda não estoura o texto
 				nextMod0Rem = rank[firstMod0Char / 3 + t1Size];
 			}
 			else {
