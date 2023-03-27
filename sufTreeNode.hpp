@@ -15,6 +15,7 @@ public:
 	sufTreeNode(int chTemp, bool folha);
 	~sufTreeNode();
 	void printRec(int depth, char childChar);
+	static int count;
 private:
 	friend class sufTree;
 	bool leaf; /*True se é uma folha, false caso contrário*/
@@ -33,13 +34,18 @@ private:
 	sufTreeNode* maxMatchingNodeRec(std::string* T, std::string* P);
 	int listaOccRec(int* lista, int nextIndex);
 	void computeSARec(int* sufArr, int* nextIndex);
+	int id; //print/debug
 };
+
+int sufTreeNode::count = 0;
 
 /*Constrói um nó com suffixIndex sufInd, que pode ou não ser uma folha.
 Se for uma folha, suffixIndex é o índice do sufixo desse nó,
 caso contrário será a chave desse nó na pilha durante a construção
 da árvore (número de caracteres soletrados até esse nó)*/
 sufTreeNode::sufTreeNode(int sufInd, bool folha) {
+	this->id = count;
+	count++;
 	this->leaf = folha;
 	this->suffixIndex = sufInd;
 	this->start = this->end = -1;
@@ -167,7 +173,7 @@ caractere deve ser impresso pelo nó*/
 void sufTreeNode::printRec(int depth, char childChar) {
 	std::string espaco(1 + 3 * depth, ' ');
 	if (this->leaf) {
-		std::cout << espaco << "[FOLHA]\n";
+		std::cout << espaco << "[FOLHA] (id: " << this->id << ")\n";
 	}
 	else {
 		unsigned char nextChar = this->firstNonNullChild; //começa iterando o menor caractere, que é o primeiro filho
@@ -178,7 +184,7 @@ void sufTreeNode::printRec(int depth, char childChar) {
 			nextChar = this->nextNonNullChild[nextChar];
 		} while (nextChar != CHAREXTRA);
 		//Imprimiu todos os filhos desse nó
-		std::cout << espaco << "[NO INTERNO]\n";
+		std::cout << espaco << "[NO' INTERNO] (id: " << this->id << ")\n";
 	}
 	std::cout << espaco << "depth: " << depth << "\n";
 	if (this->pai) {

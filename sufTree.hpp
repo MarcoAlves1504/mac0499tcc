@@ -38,11 +38,18 @@ sufTreeNode* sufTree::constroiEstruturaArv() {
 		//O texto tinha só o caractere '\0', então não há nós internos
 		return(nullptr);
 	}
+
+	/*empilha o primeiro nó separadamente para não precisar verificar
+	se topo == nullptr no laço. A pilha nunca ficará vazia a partir de agora.*/
 	rootStack pilha(sizeTxt);
+	sufTreeNode* raizPilha = new sufTreeNode(this->lcp->at(1), false);
+	raizPilha->setNextChild(nullptr);
+	pilha.stackPush(raizPilha);
+
 	/*Todos os filhos dos nós que forem atribuidos
 	explicitamente como nullptr por meio de setNextChild()
 	serão uma folha quando a árvore estiver pronta*/
-	for (int i = 1; i < sizeTxt; i++) {
+	for (int i = 2; i < sizeTxt; i++) {
 		int chNova = this->lcp->at(i);
 		sufTreeNode* topo = pilha.stackTop();
 		/*t faz o papel de um nó que será atribuido
@@ -51,31 +58,23 @@ sufTreeNode* sufTree::constroiEstruturaArv() {
 		pois só iremos fazer as folhas depois de
 		termos todos os nós internos da árvore*/
 		sufTreeNode* t = nullptr;
-		if (topo) {
-			/*A chave dos nós durante essa iteração será
-			o campo suffixIndex, já que ele nunca é usado
-			nos nós internos da árvore.*/
-			while (topo->suffixIndex > chNova) {
-				//Devemos continuar desempilhando os nós
-				topo->setNextChild(t);
-				pilha.stackPop();
-				t = topo;
-				topo = pilha.stackTop();
-			}
-			if (chNova > topo->suffixIndex) {
-				sufTreeNode* nova = new sufTreeNode(chNova, false);
-				nova->setNextChild(t);
-				pilha.stackPush(nova);
-			}
-			else {
-				topo->setNextChild(t);
-			}
+		/*A chave dos nós durante essa iteração será
+		o campo suffixIndex, já que ele nunca é usado
+		nos nós internos da árvore.*/
+		while (topo->suffixIndex > chNova) {
+			//Devemos continuar desempilhando os nós
+			topo->setNextChild(t);
+			pilha.stackPop();
+			t = topo;
+			topo = pilha.stackTop();
+		}
+		if (chNova > topo->suffixIndex) {
+			sufTreeNode* nova = new sufTreeNode(chNova, false);
+			nova->setNextChild(t);
+			pilha.stackPush(nova);
 		}
 		else {
-			//Devemos empilhar um nó interno com chave chNova
-			sufTreeNode* nova = new sufTreeNode(chNova, false);
-			nova->setNextChild(nullptr);
-			pilha.stackPush(nova);
+			topo->setNextChild(t);
 		}
 	}
 	//Terminamos de iterar o vetor LCP e de criar nós internos
